@@ -89,28 +89,38 @@ def generate_password_combinations(infolist, specal_list, password_length):
     :param password_length: 密码长度
     :return: 包含所有可能密码组合的集合
     """
+    # 初始化一个集合，用于存储所有可能的组合
     combinations = set()
 
+    # 遍历信息列表，寻找和生成所有可能的密码组合
     for a in infolist:
+        # 如果当前元素的长度大于等于预设的密码长度，则直接添加到组合集中
         if len(a) >= password_length:
             combinations.add(a)
         else:
+            # 计算还需要多少字符达到密码长度
             need_words = password_length - len(a)
+            # 使用数字的排列组合来补充缺失的字符数，并添加到组合集中
             for b in itertools.permutations(string.digits, need_words):
                 combinations.add(a + ''.join(b))
 
+    # 遍历信息列表，尝试将两个元素拼接起来作为密码组合
     for a in infolist:
         for c in infolist:
             combined = a + c
+            # 如果拼接后的长度大于等于密码长度，则添加到组合集中
             if len(combined) >= password_length:
                 combinations.add(combined)
 
+    # 遍历信息列表，尝试将两个信息元素和一个特殊字符元素拼接起来作为密码组合
     for a in infolist:
         for d in infolist:
             for e in specal_list:
+                # 生成三种不同的拼接方式，以覆盖可能的密码结构
                 combined1 = a + d + e
                 combined2 = e + d + a
                 combined3 = a + e + d
+                # 如果拼接后的长度大于等于密码长度，则添加到组合集中
                 if len(combined1) >= password_length:
                     combinations.add(combined1)
                 if len(combined2) >= password_length:
@@ -118,8 +128,8 @@ def generate_password_combinations(infolist, specal_list, password_length):
                 if len(combined3) >= password_length:
                     combinations.add(combined3)
 
+    # 返回所有生成的密码组合
     return combinations
-
 
 def combination(dict_file="dict.txt", info_file="info.txt", password_length=4):
     """
@@ -147,4 +157,4 @@ def combination(dict_file="dict.txt", info_file="info.txt", password_length=4):
 # 执行密码生成函数
 combination(dict_file=args.dict_file, info_file=args.info_file, password_length=args.password_length)
 # 也可以选择执行read_info_list()来仅读取和打印个人信息
-print(read_info_list())
+# print(read_info_list())
