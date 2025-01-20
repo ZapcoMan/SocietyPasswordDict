@@ -158,20 +158,38 @@ def combination(dict_file="dict.txt", info_file="info.txt", password_length=4):
     :param info_file: 个人信息文件路径，默认为 "info.txt"
     :param password_length: 密码长度，默认为 4
     """
-    infolist = read_info_list(info_file)
-    specal_list = create_special_list()
+    try:
+        # 确保文件路径存在
+        if not os.path.exists(os.path.dirname(dict_file)):
+            os.makedirs(os.path.dirname(dict_file))
+        if not os.path.exists(os.path.dirname(info_file)):
+            os.makedirs(os.path.dirname(info_file))
 
-    if not infolist:
-        logger.warning("个人信息列表为空，无法生成密码组合")
-        return
+        infolist = read_info_list(info_file)
+        specal_list = create_special_list()
 
-    combinations = generate_password_combinations(infolist, specal_list, password_length)
+        if not infolist:
+            logger.warning("个人信息列表为空，无法生成密码组合")
+            return
 
-    with open(dict_file, "w", encoding="utf-8") as df:
-        for password in combinations:
-            df.write(password + '\n')
+        # 验证 password_length 是否合理
+        if password_length <= 0 or password_length > len(infolist) + len(specal_list):
+            logger.error(f"无效的密码长度 {password_length}")
+            return
 
-    logger.info(f"生成的密码组合已写入文件 {dict_file}")
+        # 使用生成器逐步生成密码组合
+        def generate_combinations():
+            for password in generate_password_combinations(infolist, specal_list, password_length):
+                yield password
+
+        with open(dict_file, "w", encoding="utf-8") as df:
+            for password in generate_combinations():
+                df.write(password + '\n')
+
+        logger.info(f"生成的密码组合已写入文件 {dict_file}")
+
+    except Exception as e:
+        logger.error(f"发生错误: {e}")
 
 
 # 执行密码生成函数
