@@ -8,7 +8,6 @@ import itertools
 import logging
 import os
 import string
-
 import colorlog
 
 # 配置日志记录
@@ -51,7 +50,7 @@ def read_info_list(info_file="info.txt"):
         return info_list
 
     try:
-        with open(info_file, "r", encoding="utf-8") as info:
+        with open(info_file, "r", encoding='utf-8') as info:
             for line in info:
                 # 提取每行信息的字段值，并添加到列表中
                 parts = line.strip().split(":")
@@ -71,6 +70,7 @@ def read_info_list(info_file="info.txt"):
     except Exception as e:
         logger.error(f"读取个人信息文件时发生未知错误: {e}")
         raise  # 重新抛出未知异常以便调用者处理
+
     return info_list
 
 
@@ -159,37 +159,37 @@ def combination(dict_file="dict.txt", info_file="info.txt", password_length=4):
     :param password_length: 密码长度，默认为 4
     """
     try:
-        # 确保文件路径存在
-        if not os.path.exists(os.path.dirname(dict_file)):
-            os.makedirs(os.path.dirname(dict_file))
-        if not os.path.exists(os.path.dirname(info_file)):
-            os.makedirs(os.path.dirname(info_file))
-
+        # 从信息文件中读取个人信息列表
         infolist = read_info_list(info_file)
-        specal_list = create_special_list()
-
         if not infolist:
             logger.warning("个人信息列表为空，无法生成密码组合")
             return
 
-        # 验证 password_length 是否合理
-        if password_length <= 0 or password_length > len(infolist) + len(specal_list):
-            logger.error(f"无效的密码长度 {password_length}")
+        # 创建一个特殊列表，可能包含用于生成密码的特殊字符或配置
+        specal_list = create_special_list()
+
+        # 检查密码长度是否合理
+        if password_length <= 0:
+            logger.error("密码长度必须大于0")
             return
 
-        # 使用生成器逐步生成密码组合
-        def generate_combinations():
-            for password in generate_password_combinations(infolist, specal_list, password_length):
-                yield password
+        # 生成密码组合，基于个人信息列表、特殊列表和指定的密码长度
+        combinations = generate_password_combinations(infolist, specal_list, password_length)
 
+        # 打开字典文件以写入生成的密码组合
         with open(dict_file, "w", encoding="utf-8") as df:
-            for password in generate_combinations():
+            for password in combinations:
+                # 将每个生成的密码写入字典文件
                 df.write(password + '\n')
 
-        logger.info(f"生成的密码组合已写入文件 {dict_file}")
+        logger.info(f"密码组合已成功生成并写入字典文件 {dict_file}")
 
+    except FileNotFoundError as e:
+        logger.error(f"文件未找到: {e}")
+    except PermissionError as e:
+        logger.error(f"权限错误: {e}")
     except Exception as e:
-        logger.error(f"发生错误: {e}")
+        logger.error(f"发生未知错误: {e}")
 
 
 # 执行密码生成函数
