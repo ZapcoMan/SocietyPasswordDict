@@ -8,6 +8,7 @@ import itertools
 import logging
 import os
 import string
+
 import colorlog
 
 # 配置日志记录
@@ -30,7 +31,7 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 # 设置命令行参数解析
-parser = argparse.ArgumentParser(description="生成密码字典")
+parser = argparse.ArgumentParser(description="生成社工密码字典")
 parser.add_argument("--dict_file", type=str, default="dict.txt", help="密码字典文件路径，默认为 dict.txt")
 parser.add_argument("--info_file", type=str, default="info.txt", help="个人信息文件路径，默认为 info.txt")
 parser.add_argument("--password_length", type=int, default=4, help="密码长度，默认为 4")
@@ -51,26 +52,44 @@ def read_info_list(info_file="info.txt"):
 
     try:
         with open(info_file, "r", encoding="utf-8") as info:
-            lines = info.readlines()
-            for line in lines:
+            for line in info:
                 # 提取每行信息的字段值，并添加到列表中
                 parts = line.strip().split(":")
                 if len(parts) == 2:
                     info_list.append(parts[1])
                 else:
                     logger.warning(f"格式错误的行: {line.strip()}")
+    except FileNotFoundError:
+        logger.error(f"文件 {info_file} 未找到")
+        return info_list
+    except IOError as e:
+        logger.error(f"读取个人信息文件时发生 I/O 错误: {e}")
+        return info_list
+    except UnicodeDecodeError:
+        logger.error(f"无法解码文件 {info_file}，请检查编码设置")
+        return info_list
     except Exception as e:
-        logger.error(f"读取个人信息文件时发生错误: {e}")
+        logger.error(f"读取个人信息文件时发生未知错误: {e}")
+        raise  # 重新抛出未知异常以便调用者处理
     return info_list
 
 
-def create_number_list():
+def create_number_list(length=3):
     """
-    生成所有可能的三位数字组合
-    :return: 包含所有三位数字组合的列表
+    生成所有可能的指定长度的数字组合
+    :param length: 数字组合的长度，默认为3
+    :return: 包含所有指定长度数字组合的生成器
     """
-    numbers_list = [''.join(p) for p in itertools.product(string.digits, repeat=3)]
-    return numbers_list
+    try:
+        # 使用生成器表达式以减少内存占用
+        numbers_generator = (''.join(p) for p in itertools.product(string.digits, repeat=length))
+        return list(numbers_generator)  # 如果需要返回列表，可以在这里转换
+    except ImportError as e:
+        print(f"模块导入失败: {e}")
+        return []
+    except Exception as e:
+        print(f"发生未知错误: {e}")
+        return []
 
 
 def create_special_list():
@@ -130,6 +149,7 @@ def generate_password_combinations(infolist, specal_list, password_length):
 
     # 返回所有生成的密码组合
     return combinations
+
 
 def combination(dict_file="dict.txt", info_file="info.txt", password_length=4):
     """
